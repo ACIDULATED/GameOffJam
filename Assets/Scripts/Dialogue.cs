@@ -7,6 +7,8 @@ public class Dialogue : MonoBehaviour
 {
     public TextReveal tr;
     public InputActionReference submit;
+    public GameObject box;
+    public GameObject player;
     // Start is called before the first frame update
     void Start()
     {
@@ -20,14 +22,19 @@ public class Dialogue : MonoBehaviour
     }
     public IEnumerator playDialogue(DialogueLine[] dl)
     {
+        box.SetActive(true);
         for (int i = 0; i < dl.Length; i++)
         {
-            StartCoroutine(tr.RevealCharacters(dl[i]));
+            yield return StartCoroutine(tr.RevealCharacters(dl[i]));
             while (!submit.action.triggered)
             { 
                 yield return null;
             }
         }
+        box.SetActive(false);
+        player.GetComponent<Player>().enabled = true;
+        player.GetComponent<Interaction>().enabled = true;
+        player.GetComponent<PlayerInput>().enabled = true;
     }
 
     void OnSubmit()
