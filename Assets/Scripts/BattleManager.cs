@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BattleManager : MonoBehaviour
 {
@@ -12,15 +14,30 @@ public class BattleManager : MonoBehaviour
     public GameObject inventoryPanel;
     public GameObject handQTE;
     public GameObject knifeQTE;
+    public GameObject enemyTurnPanel;
+    public TMP_Text statusText;
     public RectTransform cursor;
     public float knifeWaitTime = 0.5f;
     bool qteSuccess = false;
     Enemy[] enemies;
     int currentlySelected;
-    enum State { QTE, Selection, none }
+    enum State { KnifeQTE,HandsQTE, Selection, none }
     String quickTimeEvent;
     State state;
     bool select;
+    public GameObject redLight;
+    public GameObject yellowLight;
+    public GameObject greenLight;
+    public GameObject ZKey;
+    public int maxHP = 100;
+    public int HP = 100;
+    public int knifeDmg = 15;
+    public int punchDmg = 35;
+    public int defense = 5;
+    int mashCounter;
+    public TMP_Text mashCounterText;
+    public Image hpBar;
+    public TMP_Text hpText; 
     // Start is called before the first frame update
     void Start()
     {
@@ -41,9 +58,13 @@ public class BattleManager : MonoBehaviour
     public void OnHands()
     {
         fightPanel.SetActive(false);
-        handQTE.SetActive(true);
-        StartCoroutine(HandsEvent());
-        
+        cursor.gameObject.SetActive(true);
+        currentlySelected = 0;
+        cursor.SetParent(enemies[currentlySelected].transform);
+        cursor.anchoredPosition = Vector2.zero;
+        state = State.Selection;
+        quickTimeEvent = "HandsEvent";
+
     }
     public void OnKnife()
     {
@@ -72,35 +93,66 @@ public class BattleManager : MonoBehaviour
 
     IEnumerator EnemyTurn()
     {
-        yield return null;
+        enemyTurnPanel.SetActive(true);
+        foreach(Enemy i in enemies)
+        {
+            TakeDamage(i.attack);
+            statusText.text = i.name + " attacked!";
+            //play attack effect
+            yield return new WaitForSeconds(3);
+        }
+        enemyTurnPanel.SetActive(false);
+        mainPanel.SetActive(true);
     }
     IEnumerator HandsEvent()
     {
-        yield return null;
+        state = State.HandsQTE;
+        handQTE.SetActive(true);
+        mashCounter = 0;
+        mashCounterText.text = "3";
+        yield return new WaitForSeconds(1);
+        mashCounterText.text = "2";
+        yield return new WaitForSeconds(1);
+        mashCounterText.text = "1";
+        state = State.none;
+        enemies[currentlySelected].TakeDamage(Mathf.Min(2 * mashCounter, punchDmg));
+        yield return new WaitForSeconds(1);
+        handQTE.SetActive(false);
+        StartCoroutine(EnemyTurn());
     }
     IEnumerator KnifeEvent()
     {
+        state = State.KnifeQTE;
+        redLight.SetActive(false);
+        yellowLight.SetActive(false);
+        greenLight.SetActive(false);
+        ZKey.SetActive(false);
         knifeQTE.SetActive(true);
-        //change text at bottom
-        //turn on red light
+        redLight.SetActive(true);
         yield return new WaitForSeconds(0.5f);
-        //turn on yellow light
+        yellowLight.SetActive(true);
         yield return new WaitForSeconds(0.5f);
-        //turn on green light
+        greenLight.SetActive(true);
         yield return new WaitForSeconds(0.5f);
-        //turn on Z button
+        ZKey.SetActive(true);
         qteSuccess = false;
         yield return new WaitForSeconds(knifeWaitTime);
         if (qteSuccess == true)
         {
-            //do damage
+            enemies[currentlySelected].TakeDamage(knifeDmg);
         }
+        state = State.none;
+        yield return new WaitForSeconds(1);
+        knifeQTE.SetActive(false);
+        StartCoroutine(EnemyTurn());
     }
 
     void OnInteract()
     {
-        if (state == State.QTE)
+        if (state == State.KnifeQTE)
             qteSuccess = true;
+        if (state == State.HandsQTE)
+            mashCounter += 1;
         if (state == State.Selection)
             OnSelect();
     }
@@ -135,6 +187,25 @@ public class BattleManager : MonoBehaviour
 
     private void OnSelect()
     {
+        cursor.gameObject.SetActive(false);
         StartCoroutine(quickTimeEvent);
+    }
+    public void TakeDamage(int damage)
+    {
+        HP -= damage;
+        if (HP <= 0)
+        {
+            GameOver();
+        }
+        UpdateUI();
+    }
+    void UpdateUI()
+    {
+        hpBar.fillAmount = (float)HP / maxHP;
+        hpText.text = "HP: " + HP + "/" + maxHP;
+    }
+    void GameOver()
+    {
+
     }
 }
