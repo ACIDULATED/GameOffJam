@@ -11,4 +11,10 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Cave.unity
     guid: ec30e1d6958ac434a9179565c253036a
+  - enabled: 1
+    path: Assets/Scenes/Mountain2.unity
+    guid: dfcc187e86ad12b47aee4e399e38ff99
+  - enabled: 1
+    path: Assets/Scenes/Doomba_Single.unity
+    guid: 5e3b827caf2a9444fac065c804c54484
   m_configObjects: {}
